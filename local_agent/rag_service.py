@@ -26,3 +26,21 @@ class RAGService:
 
         ## now put them in the db
         self.__db_service.store_embedding(embedding_model=self.__embedding_model, split_docs=split_docs)
+
+    def query(self, query):
+        matched_docs = self.__db_service.vector_search(query, self.__embedding_model)
+        page_contents = []
+        
+        for doc in matched_docs:
+            splited_docs = doc.page_content.split(" ")
+            cleaned_words = []
+        
+            ## remove \n
+            for word in splited_docs:
+                cleaned_words.append(word.replace("\n", ""))
+
+            ## joined all cleaned words into single string 
+            page_contents.append(" ".join(cleaned_words))
+
+        return page_contents       
+

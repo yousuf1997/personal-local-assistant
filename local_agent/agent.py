@@ -6,19 +6,23 @@ from google.genai import types
 
 class PersonalAssistant:
 
-    def __init__(self):
+    def __init__(self, rag_service):
         ## Barebone setup
         self.__APP_NAME = "weather_tutorial_app"
         self.__USER_ID = "user_1"
         self.__session_service = InMemorySessionService()
         self.__current_session = None
         self.__runner = None
+        self.__rag_service = rag_service
         self.__root_agent = Agent(
             model='gemini-3.6-flash',
             name='root_agent',
-            description="Tells the current time in a specified city.",
-            instruction="You are a helpful assistant that tells the current time in cities. Use the 'get_current_time' tool for this purpose.",
-            tools=[self.__get_current_time],
+            description="You are personal agent.",
+            instruction=""" 
+                You are helpful personal agent, you answer questions related to history of India only, and If the user asks about Old Sage novel, use the 
+                query tool which is RAG tool, it will give you the document related to the query. Answer them to the answer.
+            """,
+            tools=[self.__rag_service.query],
         )
 
     async def __start_session(self, session_id):
