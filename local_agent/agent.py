@@ -69,7 +69,10 @@ class PersonalAssistant:
         print(f"<<< Agent Response: {final_response_text}")
 
     async def ask_agent(self, session_id, query):
-        await self.__call_agent_async(query, session_id)
+        try:
+            await self.__call_agent_async(query, session_id)
+        except Exception as e:
+            print("Error encountered during the processing")     
 
     # Mock tool implementation
     def __get_current_time(self, city: str) -> dict:

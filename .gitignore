@@ -1,5 +1,5 @@
 
 local_agent/.adk
 .env
-../.idea/
+.idea/
 local_agent/__pycache__/
