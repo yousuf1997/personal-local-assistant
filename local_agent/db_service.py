@@ -77,5 +77,10 @@ class DBService:
                 batched_docs.append(current_batch_docs)
                 current_batch_docs = []
             document_index = document_index + 1
+
+        ## add the left over
+        if len(current_batch_docs) > 0:
+            batched_docs.append(current_batch_docs)
+
         return batched_docs   
              
