@@ -12,93 +12,39 @@ The application consists of three primary components:
 2. **RAGService** – Loads PDF documents, splits them into smaller chunks, generates embeddings, and retrieves relevant document content.
 3. **DBService** – Manages MongoDB connections, document storage, and vector similarity searches.
 
-### High-Level Architecture
+### Class Diagram
 
-```text
-                  +----------------------+
-                  |        User          |
-                  +----------+-----------+
-                             |
-                             | User Query
-                             v
-                  +----------------------+
-                  |  PersonalAssistant   |
-                  |                      |
-                  |   Google ADK Agent   |
-                  |       Gemini         |
-                  +----------+-----------+
-                             |
-                             | Tool Invocation
-                             v
-                  +----------------------+
-                  |      RAGService      |
-                  |                      |
-                  |  Query Processing    |
-                  |  Document Retrieval  |
-                  +----------+-----------+
-                             |
-                             | Vector Search
-                             v
-                  +----------------------+
-                  |      DBService       |
-                  |                      |
-                  | MongoDB Atlas        |
-                  | Vector Search        |
-                  +----------+-----------+
-                             |
-                             | Relevant Documents
-                             v
-                  +----------------------+
-                  |   Gemini LLM Agent   |
-                  |                      |
-                  | Context + User Query |
-                  +----------+-----------+
-                             |
-                             | Generated Answer
-                             v
-                  +----------------------+
-                  |        User          |
-                  +----------------------+
-```
+The class diagram illustrates the relationships and responsibilities of the application's primary components.
 
-### Document Ingestion Architecture
+![Class Diagram](class_diagram.png)
+
+### Document Ingestion Flow
 
 PDF documents are processed separately before they can be queried.
 
-```text
-       +------------------+
-       |    PDF Files     |
-       +--------+---------+
-                |
-                v
-       +------------------+
-       |   PyPDFLoader    |
-       |                  |
-       |  Load PDF Pages  |
-       +--------+---------+
-                |
-                v
-       +------------------+
-       | Text Splitter    |
-       |                  |
-       | Chunk Size: 500  |
-       | Overlap: 150     |
-       +--------+---------+
-                |
-                v
-       +------------------+
-       | Google Gemini    |
-       | Embedding Model  |
-       +--------+---------+
-                |
-                v
-       +------------------+
-       | MongoDB Atlas    |
-       |                  |
-       | Store Vectors    |
-       | + Metadata       |
-       +------------------+
-```
+The ingestion pipeline performs the following operations:
+
+1. Loads PDF documents using `PyPDFLoader`.
+2. Splits the extracted text into smaller chunks.
+3. Generates vector embeddings using Google's embedding model.
+4. Stores the embeddings and associated metadata in MongoDB Atlas.
+
+![Document Ingestion Flow](ingestion_flow.png)
+
+### Query Flow
+
+When a user submits a question, Google ADK manages the conversation and determines when to invoke the RAG service.
+
+The query pipeline performs the following operations:
+
+1. Receives the user's question.
+2. The Gemini-powered agent determines whether the RAG tool is required.
+3. The RAG service converts the question into a vector embedding.
+4. MongoDB Atlas Vector Search retrieves the most relevant document chunks.
+5. The retrieved context is returned to the AI agent.
+6. Gemini generates a context-aware response.
+
+![Query Flow](query_flow.png)
 
 ## Technology Stack
 
@@ -119,21 +65,23 @@ PDF documents are processed separately before they can be queried.
 personal-local-assistant/
 │
 ├── local_agent/
-│   ├── main.py                 # Application entry point
-│   ├── personal_assistant.py   # Google ADK agent implementation
-│   ├── rag_service.py          # Document processing and RAG
-│   └── db_service.py           # MongoDB connectivity and vector search
+│   ├── main.py
+│   ├── personal_assistant.py
+│   ├── rag_service.py
+│   └── db_service.py
 │
 ├── documents/
-│   └── old_sage.pdf            # Example knowledge-base document
+│   └── old_sage.pdf
 │
-├── .env                        # Environment variables
+├── class_diagram.png
+├── ingestion_flow.png
+├── query_flow.png
+│
+├── .env
 ├── .gitignore
 ├── requirements.txt
 └── README.md
 ```
-
-*Note: Adjust the filenames and directory structure to match your actual repository.*
 
 ## Prerequisites
 
