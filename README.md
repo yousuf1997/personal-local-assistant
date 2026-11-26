@@ -1,63 +1,53 @@
 # Personal Local Assistant
 
-A Python-based AI personal assistant built using **Google Agent Development Kit (ADK)**, **LangChain**, and **MongoDB Atlas Vector Search**.
+A Python-based AI personal assistant built using **Google Agent Development Kit (ADK)**, **Gemini**, **LangChain**, **MongoDB Atlas Vector Search**, and **Model Context Protocol (MCP)**.
 
-The application uses a Retrieval-Augmented Generation (RAG) architecture to retrieve relevant information from PDF documents and provide context-aware answers through a Gemini-powered AI agent.
+The application combines AI agent orchestration, Retrieval-Augmented Generation (RAG), and external tool integration to provide context-aware responses.
+
+The assistant can retrieve information from PDF documents using semantic search and interact with external services through MCP tools. A Spring Boot MCP server exposes historical event data to the AI agent, demonstrating how Python-based AI applications can integrate with Java backend services.
 
 ## Architecture
 
-The application consists of three primary components:
+The application consists of the following primary components:
 
 1. **PersonalAssistant** – Manages AI agent initialization, conversation sessions, and user queries using Google ADK.
-2. **RAGService** – Loads PDF documents, splits them into smaller chunks, generates embeddings, and retrieves relevant document content.
-3. **DBService** – Manages MongoDB connections, document storage, and vector similarity searches.
+2. **Root Agent (Gemini)** – Understands user queries, determines which tools to invoke, and generates context-aware responses.
+3. **RAGService** – Loads PDF documents, splits extracted text into smaller chunks, generates embeddings, and retrieves relevant document content.
+4. **DBService** – Manages MongoDB connections, document storage, and vector similarity searches.
+5. **MCP Client** – Connects the Google ADK agent to external tools using the Model Context Protocol.
+6. **Spring Boot MCP Server** – Exposes historical event retrieval functionality through MCP tools using Spring AI.
 
-### Class Diagram
+### Overall Architecture and Execution Flow
 
-The class diagram illustrates the relationships and responsibilities of the application's primary components.
+The diagram illustrates the interaction between the user, AI agent, RAG subsystem, MongoDB Atlas, and Spring Boot MCP server.
 
-![Class Diagram](class_diagram.png)
+![Overall Architecture and Execution Flow](overall-flow.png)
 
-### Document Ingestion Flow
+## Core Features
 
-PDF documents are processed separately before they can be queried.
-
-The ingestion pipeline performs the following operations:
-
-1. Loads PDF documents using `PyPDFLoader`.
-2. Splits the extracted text into smaller chunks.
-3. Generates vector embeddings using Google's embedding model.
-4. Stores the embeddings and associated metadata in MongoDB Atlas.
-
-![Document Ingestion Flow](ingestion_flow.png)
-
-### Query Flow
-
-When a user submits a question, Google ADK manages the conversation and determines when to invoke the RAG service.
-
-The query pipeline performs the following operations:
-
-1. Receives the user's question.
-2. The Gemini-powered agent determines whether the RAG tool is required.
-3. The RAG service converts the question into a vector embedding.
-4. MongoDB Atlas Vector Search retrieves the most relevant document chunks.
-5. The retrieved context is returned to the AI agent.
-6. Gemini generates a context-aware response.
-
-![Query Flow](query_flow.png)
+- **AI Agent Orchestration:** Uses Google ADK and Gemini to process user queries and coordinate tool execution.
+- **Retrieval-Augmented Generation (RAG):** Retrieves relevant information from PDF documents using semantic similarity search.
+- **Vector Search:** Uses MongoDB Atlas Vector Search to store and retrieve document embeddings.
+- **MCP Tool Integration:** Connects the AI agent to external tools through the Model Context Protocol.
+- **Java and Python Integration:** Demonstrates communication between a Python AI application and a Spring Boot MCP server.
+- **Session Management:** Uses Google ADK's InMemorySessionService to manage conversation sessions.
 
 ## Technology Stack
 
 | Technology | Purpose |
 |---|---|
-| Python | Primary programming language |
+| Python | Primary AI application language |
+| Java | MCP server implementation |
 | Google ADK | AI agent orchestration and session management |
-| Gemini | LLM for generating responses |
+| Gemini | LLM for reasoning and response generation |
 | Google Generative AI Embeddings | Converts text into vector embeddings |
 | LangChain | RAG pipeline and document processing |
-| MongoDB Atlas | Vector database |
-| PyMongo | MongoDB database connectivity |
+| MongoDB Atlas | Vector database and document storage |
+| PyMongo | MongoDB connectivity |
 | PyPDF | PDF document loading |
+| Spring Boot | Java backend application |
+| Spring AI MCP | MCP server and tool integration |
+| Model Context Protocol | Standardized communication between AI agents and external tools |
 
 ## Project Structure
 
@@ -70,13 +60,22 @@ personal-local-assistant/
 │   ├── rag_service.py
 │   └── db_service.py
 │
+├── local_agent_mcp_server/
+│   └── src/
+│       └── main/
+│           └── java/
+│               └── com/mohamed/local_agent_mcp_server/
+│                   ├── providers/
+│                   │   └── HistoryEventProvider.java
+│                   ├── services/
+│                   │   └── HistoryEventService.java
+│                   └── models/
+│                       └── HistoryEvent.java
+│
 ├── documents/
 │   └── old_sage.pdf
 │
-├── class_diagram.png
-├── ingestion_flow.png
-├── query_flow.png
-│
+├── overall-flow.png
 ├── .env
 ├── .gitignore
 ├── requirements.txt
@@ -88,18 +87,19 @@ personal-local-assistant/
 Before running the application, make sure you have:
 
 - Python 3.10 or later.
+- Java and a compatible JDK for the Spring Boot MCP server.
 - A Google AI Studio API key.
 - A MongoDB Atlas account.
 - A MongoDB Atlas cluster with Vector Search enabled.
-- A MongoDB Vector Search index configured for your embedding dimensions.
+- A configured MongoDB Vector Search index.
+- A running Spring Boot MCP server.
 
-## Installation
+## Python Application Setup
 
 ### 1. Clone the repository
 
 ```bash
 git clone <YOUR_REPOSITORY_URL>
-
 cd personal-local-assistant
 ```
 
@@ -144,25 +144,7 @@ Make sure your application loads these variables using `python-dotenv` or anothe
 
 **Important:** Never commit your `.env` file or expose your API keys and database credentials.
 
-## Dependencies
-
-The project uses the following Python packages:
-
-```text
-google-adk
-langchain
-langchain-community
-langchain-core
-langchain-google-genai
-langchain-mongodb
-langchain-text-splitters
-pymongo
-pypdf
-```
-
 ## MongoDB Configuration
-
-Create a MongoDB Atlas database and collection.
 
 The current implementation uses:
 
@@ -172,11 +154,11 @@ Collection: embedd-data
 Index:      vector_index
 ```
 
-Create a Vector Search index named `vector_index` on the collection.
+Create a MongoDB Atlas Vector Search index named `vector_index` on the `embedd-data` collection.
 
-The index must use the same embedding dimensions as the configured embedding model.
+The index must use the correct vector field name and dimensions generated by the configured embedding model.
 
-For the current implementation, the embedding model is:
+Current embedding model:
 
 ```python
 GoogleGenerativeAIEmbeddings(
@@ -184,15 +166,41 @@ GoogleGenerativeAIEmbeddings(
 )
 ```
 
-Make sure the index uses the correct vector field name and dimensions generated by the embedding model.
+## MCP Server Configuration
+
+The project uses a separate Spring Boot application to expose historical event retrieval functionality through MCP.
+
+The Python application connects to the MCP server using Google's ADK `McpToolset`.
+
+Current MCP endpoint:
+
+```text
+http://localhost:8080/mcp
+```
+
+The Spring Boot application exposes the following tool:
+
+```text
+Tool Name: history_event_tool
+```
+
+**Tool functionality:**
+
+- Accepts a historical year as input.
+- Retrieves the corresponding historical event.
+- Returns a `HistoryEvent` object to the AI agent.
+
+The current dataset covers British India historical events from 1600–1947.
+
+Start the Spring Boot MCP server before running the Python application.
 
 ## How It Works
 
-### 1. Document Embedding
+### 1. Document Ingestion
 
 The `RAGService` loads PDF documents using `PyPDFLoader`.
 
-The documents are then split into smaller chunks using `RecursiveCharacterTextSplitter`.
+The extracted pages are filtered and split into smaller chunks using `RecursiveCharacterTextSplitter`.
 
 Current configuration:
 
@@ -205,16 +213,17 @@ RecursiveCharacterTextSplitter(
 
 Each chunk is converted into a vector embedding using Google's embedding model and stored in MongoDB Atlas.
 
-### 2. Vector Search
+### 2. RAG Retrieval
 
-When a user submits a question, the RAG service:
+When a user asks a question about the Old Sage novel:
 
-1. Converts the question into an embedding.
-2. Performs a similarity search against MongoDB Atlas.
-3. Retrieves the three most relevant document chunks.
-4. Returns the retrieved content to the AI agent.
+1. Gemini identifies that the RAG tool is required.
+2. The RAG service converts the question into an embedding.
+3. MongoDB Atlas Vector Search performs semantic similarity search.
+4. The three most relevant document chunks are retrieved.
+5. The retrieved content is returned to the AI agent.
 
-The retriever currently uses:
+Current retriever configuration:
 
 ```python
 search_type="similarity"
@@ -224,40 +233,52 @@ search_kwargs={
 }
 ```
 
-### 3. AI Agent Response
+### 3. MCP Tool Execution
 
-Google ADK manages the conversation and determines when to invoke the RAG tool.
+When a user asks about a historical event:
 
-The agent receives the retrieved document content and uses it to generate a response based on the available context.
+1. Gemini determines that the historical event MCP tool is required.
+2. Google ADK invokes the MCP tool through `McpToolset`.
+3. The Spring Boot MCP server receives the request.
+4. `HistoryEventProvider` delegates the request to `HistoryEventService`.
+5. The service retrieves the historical event using the requested year.
+6. The result is returned to the AI agent through MCP.
 
-The agent is configured with:
+### 4. AI Agent Response
 
-```python
-tools=[self.__rag_service.query]
-```
+After receiving the relevant context from RAG or the historical event data from MCP, Gemini generates the final response.
 
-This allows the agent to invoke the RAG service as a tool when answering questions about the knowledge base.
+Google ADK manages the execution lifecycle and returns the final response to the user.
 
 ## Running the Application
 
-After configuring the environment and MongoDB Atlas, run the application using:
+Start the Spring Boot MCP server first.
+
+Then activate the Python virtual environment and run:
 
 ```bash
 python main.py
 ```
 
-Make sure the application initializes the database service, RAG service, and personal assistant before accepting user queries.
+Make sure the application initializes the following components:
+
+1. DBService
+2. RAGService
+3. PersonalAssistant
+
+The MCP server should be accessible at `http://localhost:8080/mcp` before submitting queries that require historical event retrieval.
 
 ## Future Improvements
 
 - [ ] Support multiple PDF documents and knowledge bases.
-- [ ] Implement conversation history persistence.
+- [ ] Implement persistent conversation history.
 - [ ] Add streaming responses from the AI agent.
 - [ ] Improve document retrieval with metadata filtering.
 - [ ] Implement error handling and retry mechanisms for API rate limits.
 - [ ] Add support for additional document formats.
 - [ ] Implement a local user interface for interacting with the assistant.
+- [ ] Expand MCP integration with additional external tools.
 
 ## License
 
-This project is intended for personal learning and experimentation with AI agents, RAG architectures, and vector databases.
+This project is intended for personal learning and experimentation with AI agents, RAG architectures, vector databases, and Model Context Protocol integration.
