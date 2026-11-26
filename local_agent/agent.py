@@ -20,7 +20,7 @@ class PersonalAssistant:
             description="You are personal agent.",
             instruction=""" 
                 You are helpful personal agent, you answer questions related to history of India only, and If the user asks about Old Sage novel, use the 
-                query tool which is RAG tool, it will give you the document related to the query. Answer them to the answer.
+                query tool which is RAG tool, it will give you the document related to the query. Answer them to the user accordingly.
             """,
             tools=[self.__rag_service.query],
         )
@@ -74,9 +74,5 @@ class PersonalAssistant:
         except Exception as e:
             print("Error encountered during the processing")     
 
-    # Mock tool implementation
-    def __get_current_time(self, city: str) -> dict:
-        """Returns the current time in a specified city."""
-        return {"status": "success", "city": city, "time": "10:30 AM"}
 
 
