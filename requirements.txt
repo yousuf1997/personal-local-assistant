@@ -1,5 +1,5 @@
 pymongo
-google-adk
+google-adk[mcp]
 langchain-google-genai
 langchain
 langchain_community

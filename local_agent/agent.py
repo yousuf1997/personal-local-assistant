@@ -2,6 +2,8 @@ from google.adk.agents.llm_agent import Agent
 from google.adk.sessions import InMemorySessionService
 from google.adk.runners import Runner
 from google.genai import types
+from google.adk.tools.mcp_tool import McpToolset
+from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
 
 
 class PersonalAssistant:
@@ -20,9 +22,25 @@ class PersonalAssistant:
             description="You are personal agent.",
             instruction=""" 
                 You are helpful personal agent, you answer questions related to history of India only, and If the user asks about Old Sage novel, use the 
-                query tool which is RAG tool, it will give you the document related to the query. Answer them to the user accordingly.
+                query tool which is RAG tool, it will give you the document related to the query.
+                If the user asks about any particular event that happend in India from 1600-1947 use the available tool to get the event facts, 
+                if the tool does not have the answer, you can answer accordingly.
+                Answer them to the user accordingly.
             """,
-            tools=[self.__rag_service.query],
+            tools=[
+                self.__rag_service.query,
+                McpToolset(
+                    connection_params=StreamableHTTPConnectionParams(
+                    url="http://localhost:8080/mcp",
+                    headers={
+                        "Content-Type": "application/json",
+                        "Accept": "application/json, text/event-stream",
+                    },
+                    timeout=5,
+                    sse_read_timeout=300
+                )
+            )
+            ],
         )
 
     async def __start_session(self, session_id):
